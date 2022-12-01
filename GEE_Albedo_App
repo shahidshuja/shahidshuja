@@ -1,0 +1,571 @@
+Map.setOptions('TERRAIN')
+Map.style().set('cursor', 'crosshair');
+
+Map.setCenter(75.81244834544515,35.88583853917917,9)
+var pal = ['#000080', '#0000a7', '#0000cf','#0000f7','#000dff','#0030ff','#0054ff','#0077ff','#009aff',
+          '#00bdff','#00e0fb','#18ffdf','#34ffc2','#51ffa6','#6dff8a','#8aff6d','#a6ff51','#c2ff34',
+          '#dfff18','#fbf100','#ffd000','#ffb000','#ff8f00','#ff6e00','#ff4e00','#ff2d00','#f70d00',
+          '#cf0000','#a70000','#800000'];
+
+function makeColorBarParams(palette) {
+                                     return {
+                                     bbox: [0, 0, 1, 0.1],
+                                     dimensions: '100x10',
+                                     format: 'png',
+                                     min: 0,
+                                     max: 1,
+                                     palette: pal,
+                                    };
+                                  }
+
+                // Create the color bar for the legend.
+                var vis = {min: 0, max: 1, palette: pal};
+                
+                
+
+                var colorBar = ui.Thumbnail({
+                    image: ee.Image.pixelLonLat().select(0),
+                    params: makeColorBarParams(vis.pal),
+                    style: {stretch: 'horizontal', margin: '0px 8px', maxHeight: '24px'},
+                });
+
+  // Create a panel with three numbers for the legend.
+                var legendLabels = ui.Panel({
+                    widgets: [
+                    ui.Label(vis.min, {margin: '4px 8px'}),
+                    ui.Label(
+                    ((vis.max-vis.min) / 2+vis.min),
+                    {margin: '4px 8px', textAlign: 'center', stretch: 'horizontal'}),
+                    ui.Label(vis.max, {margin: '4px 8px'})
+                    ],
+                  layout: ui.Panel.Layout.flow('horizontal')
+                });
+
+                var legendTitle = ui.Label({
+                    value: 'Spectral Albedo',
+                    style: {fontWeight: 'bold',textAlign: 'center'}
+                });
+
+                // Add the legendPanel to the map.
+                var legendPanel = ui.Panel([legendTitle, colorBar, legendLabels]);
+
+                
+
+var mainPanel = ui.Panel({
+  style: {width: '350px'}
+});
+//ui.root.add(mainPanel)
+
+var title = ui.Label({
+  value:'Snow Albedo in the Himalayas',
+  style:{'fontSize': '26px'}
+  });
+mainPanel.add(title)
+var descrip = 'This app computes the glacial albedo'+
+              ' using Landsat 8 imagery. This app provides two methods namely, Knap and Liang algorithm to '+
+              'estimate the spectral albedo using visible and NIR reflectance values.'
+              
+              ;
+
+
+
+              
+var des_label = ui.Label({
+  value:descrip,
+  style:{'fontSize': '16px',
+     textAlign: 'justified'
+  }
+  })
+mainPanel.add(des_label)
+
+var des_label1 = ui.Label({
+  value:'Reference: Knap et al 1999 and Liang et al 2000',
+  
+  style:{'fontSize': '12px',
+     textAlign: 'justified'
+  }
+  })
+mainPanel.add(des_label1)
+
+
+
+
+
+
+//////////////////////////////////inputing glacier///////////////////////////
+
+var title2x2 = ui.Label({
+  value:'Select Method.',
+  style: {'fontSize': '13px'}
+});
+// You can add widgets to the panel
+mainPanel.add(title2x2)
+
+
+
+
+var dropdownPanel0 = ui.Panel({
+  layout: ui.Panel.Layout.flow('horizontal'),
+});
+mainPanel.add(dropdownPanel0);
+
+
+var glcSelector = ui.Select({
+  placeholder: 'please wait..',
+  })
+dropdownPanel0.add(glcSelector)
+
+var models = ee.List(['Knap','Liang'])
+var modelsStrings = models.map(function(models){
+  return ee.String(models)//.format('%04d')
+})
+modelsStrings.evaluate(function(yearList) {
+  glcSelector.items().reset(yearList)
+  glcSelector.setPlaceholder('choose a formula')
+})
+
+
+
+
+
+var title2x = ui.Label({
+  value:'Select the time interval.',
+  style: {'fontSize': '13px'}
+});
+// You can add widgets to the panel
+mainPanel.add(title2x)
+
+
+var title2 = ui.Label({
+  value:'---Select Start Month---',
+  style: {'fontSize': '11px'}
+});
+// You can add widgets to the panel
+mainPanel.add(title2)
+
+// You can even add panels to other panels
+var dropdownPanel = ui.Panel({
+  layout: ui.Panel.Layout.flow('horizontal'),
+});
+mainPanel.add(dropdownPanel);
+
+var title3 = ui.Label({
+  value: '---Select End Month---',
+  style: {'fontSize': '11px'}
+});
+// You can add widgets to the panel
+mainPanel.add(title3)
+
+var dropdownPanel2 = ui.Panel({
+  layout: ui.Panel.Layout.flow('horizontal'),
+});
+mainPanel.add(dropdownPanel2);
+
+var yearSelector = ui.Select({
+  placeholder: 'please wait..',
+  })
+
+var monthSelector = ui.Select({
+  placeholder: 'please wait..',
+  })
+
+var yearSelector2 = ui.Select({
+  placeholder: 'please wait..',
+  })
+
+var monthSelector2 = ui.Select({
+  placeholder: 'please wait..',
+  })
+
+
+dropdownPanel.add(yearSelector)
+dropdownPanel.add(monthSelector)
+dropdownPanel2.add(yearSelector2)
+dropdownPanel2.add(monthSelector2)
+
+
+//var button = ui.Button('Calculate Glacical Velocity')
+//mainPanel.add(button)
+
+
+
+
+
+// Let's add a dropdown with the years
+var years = ee.List.sequence(2014, 2022)
+var months = ee.List.sequence(1, 12)
+
+// Dropdown items need to be strings
+var yearStrings = years.map(function(year){
+  return ee.Number(year).format('%04d')
+})
+var monthStrings = months.map(function(month){
+  return ee.Number(month).format('%02d')
+})
+
+// Evaluate the results and populate the dropdown
+yearStrings.evaluate(function(yearList) {
+  yearSelector.items().reset(yearList)
+  yearSelector.setPlaceholder('select a year')
+})
+
+monthStrings.evaluate(function(monthList) {
+  monthSelector.items().reset(monthList)
+  monthSelector.setPlaceholder('select a month')
+
+})
+
+// Evaluate the results and populate the dropdown
+yearStrings.evaluate(function(yearList) {
+  yearSelector2.items().reset(yearList)
+  yearSelector2.setPlaceholder('select a year')
+})
+
+monthStrings.evaluate(function(monthList) {
+  monthSelector2.items().reset(monthList)
+  monthSelector2.setPlaceholder('select a month')
+
+})
+
+// Use a SplitPanel so it's possible to resize the two panels.
+
+
+
+
+
+//var glc_id = glcSelector.getValue()
+//var selected_glacier = ee.Algorithms.If()
+
+
+
+
+
+
+
+var drawingTools = Map.drawingTools();
+drawingTools.setShown(true);
+while (drawingTools.layers().length() > 0) {
+  var layer = drawingTools.layers().get(0);
+  drawingTools.layers().remove(layer);
+}
+
+var dummyGeometry =
+    ui.Map.GeometryLayer({geometries: null, name: 'geometry', color: '#000080',shown:0})//.getShown(true)
+
+drawingTools.layers().add(dummyGeometry);
+
+function clearGeometry() {
+  var layers = drawingTools.layers();
+  layers.get(0).geometries().remove(layers.get(0).geometries().get(0));
+}
+
+function drawRectangle() {
+  clearGeometry();
+  drawingTools.setShape('rectangle');
+  drawingTools.draw();
+}
+
+function drawPolygon() {
+  clearGeometry();
+  drawingTools.setShape('polygon');
+  drawingTools.draw();
+}
+
+
+
+var symbol = {
+  rectangle: '⬛',
+  polygon: '🔺',
+  point: '📍',
+};
+var title3xc = ui.Label({
+  value: 'Select AOI',
+  style: {'fontSize': '13px'}
+});
+// You can add widgets to the panel
+mainPanel.add(title3xc)
+var controlPanel = ui.Panel({
+  widgets: [
+    ui.Label({value:'Draw AOI',style:{'fontSize':'11px'}}),
+    
+    ui.Button({
+      label: symbol.rectangle + ' Rectangle',
+      onClick: drawRectangle,
+      style: {stretch: 'horizontal',
+        width: '90px'
+      }
+    }),
+    ui.Button({
+      label: symbol.polygon + ' Polygon',
+      onClick: drawPolygon,
+      style: {stretch: 'horizontal',
+        width: '90px'
+      }
+    }),
+    
+    
+    
+    
+  ],
+  style: {position: 'bottom-left'},
+  layout: null,
+});
+
+mainPanel.add(controlPanel);
+/////////////////////////////////////////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+//////////////////////////////////////////
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+
+var pal = ['#000080', '#0000a7', '#0000cf','#0000f7','#000dff','#0030ff','#0054ff','#0077ff','#009aff',
+          '#00bdff','#00e0fb','#18ffdf','#34ffc2','#51ffa6','#6dff8a','#8aff6d','#a6ff51','#c2ff34',
+          '#dfff18','#fbf100','#ffd000','#ffb000','#ff8f00','#ff6e00','#ff4e00','#ff2d00','#f70d00',
+          '#cf0000','#a70000','#800000'];
+
+                                      /////////////////function start//////////////
+var albedo_glc = function() {
+  
+  Map.clear()
+  Map.add(legendPanel);
+  
+  
+  
+  
+  
+  var chartPanel = ui.Panel({
+  style:
+      {height: '235px', width: '400px', position: 'bottom-right', shown: false}
+  });
+  Map.add(chartPanel);
+  // Make the chart panel visible the first time a geometry is drawn.
+  if (!chartPanel.style().get('shown')) {
+    chartPanel.style().set('shown', true);
+  }
+  
+  // Get the drawn geometry; it will define the reduction region.
+  
+    
+  
+  var aoi = drawingTools.layers().get(0).getEeObject();
+  
+  drawingTools.layers().get(0).setShown(0);
+  
+  
+  // Set the drawing mode back to null; turns drawing off.
+  drawingTools.setShape(null);
+
+  // Reduction scale is based on map scale to avoid memory/timeout errors.
+  var mapScale = Map.getScale();
+  var scale = mapScale > 5000 ? mapScale * 2 : 5000;
+  Map.centerObject(aoi,11)
+  /*
+  function maskS2clouds(image) {
+                var qa = image.select('QA60');
+
+                // Bits 10 and 11 are clouds and cirrus, respectively.
+                var cloudBitMask = 1 << 10;
+                var cirrusBitMask = 1 << 11;
+
+                // Both flags should be set to zero, indicating clear conditions.
+                var maskT = qa.bitwiseAnd(cloudBitMask).eq(0)
+                          .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+
+                return image.updateMask(maskT).divide(10000);
+                }
+                */
+    function applyScaleFactors(image) {
+            var opticalBands = image.select('SR_B.').multiply(0.0000275).add(-0.2);
+            var thermalBands = image.select('ST_B.*').multiply(0.00341802).add(149.0);
+            return image.addBands(opticalBands, null, true)
+              .addBands(thermalBands, null, true);
+        }
+
+    var year = yearSelector.getValue();
+    var month = monthSelector.getValue();
+    var startDate = ee.Date.fromYMD(
+                    ee.Number.parse(year), ee.Number.parse(month), 1);
+    var year2 = yearSelector2.getValue();
+                var month2 = monthSelector2.getValue();
+                var endDate = ee.Date.fromYMD(
+                    ee.Number.parse(year2), ee.Number.parse(month2), 30);
+                    
+                    
+                    
+    var col = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
+                    .filterDate(startDate,endDate)
+                    .filterBounds(aoi)
+                    //.filter(ee.Filter.lt('CLOUDY_COVER',20))
+                    .map(applyScaleFactors);
+    var img = col.select(['SR_B7','SR_B6','SR_B5','SR_B4', 'SR_B3', 'SR_B2'])
+    print(img,'collection')
+    
+    var albd = function(image) {
+            var albedo_nap = image.expression(
+                        '0.726*b3 - 0.322*b3**2 - 0.015*b8 + 0.581*b8**2', {
+                        'b3': image.select('SR_B3'),
+                        'b8': image.select('SR_B5')
+                        }).clip(aoi).rename('ALBD')//.set(image.toDictionary(image.propertyNames()))//.copyProperties(image, ['system:time_start']);
+            return image.addBands(albedo_nap);
+            };
+            
+    var albd_li = function(image) {
+            var albedo_li = image.expression(
+                        '0.356*b2 + 0.130*b4 + 0.373*b8 + 0.085*b11 +0.072*b12 - 0.0018', {
+                        'b2': image.select('SR_B2'),
+                        'b4': image.select('SR_B4'),
+                        'b8': image.select('SR_B5'),
+                        'b11': image.select('SR_B6'),
+                        'b12': image.select('SR_B7'),
+                        }).clip(aoi).rename('ALBD')//.set(image.toDictionary(image.propertyNames()))//.copyProperties(image, ['system:time_start']);
+            return image.addBands(albedo_li);
+            };
+            
+            
+            
+    var Knap = img.map(albd)
+    var Liang = img.map(albd_li)
+    //print(alb_col)
+    
+    
+  
+
+    
+    
+    var vizi = {
+                      bands: ['SR_B4', 'SR_B3', 'SR_B2'],
+                      min:0.2,
+                      max:1.08
+                              };
+    
+    Map.addLayer(img.mean().clip(aoi),vizi,'RGB')
+    
+    /*var albedo_knap = img.mean().expression(
+                        '0.726*b3 - 0.322*b3**2 - 0.015*b8 + 0.581*b8**2', {
+                        'b3': img.select('SR_B3'),
+                        'b8': img.select('SR_B5')
+                        }).rename('albedo_knap').clip(aoi);*/
+    //Create key of items for dropdown
+//Create key of items for dropdown
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    var method = ee.List([glcSelector.getValue()])
+    var myID = ee.String(method.get(0)).getInfo();
+    print(myID)
+    var nap = 'Knap'
+    var li = 'Liang'
+    
+    if (myID == nap){
+       Map.addLayer(Knap.select(['ALBD']).mean().clamp(0,1),{palette:pal},'Albedo_Knap')
+    }
+    else if (myID == li) {
+       Map.addLayer(Liang.select(['ALBD']).mean().clamp(0,1),{palette:pal},'Albedo_Liang')
+    }
+    //var cox = ee.ImageCollection([])
+    
+    
+    
+    
+    
+    
+    
+  // Chart NDVI time series for the selected area of interest.
+ 
+  
+          
+    //Map.add(chart)
+            // Replace the existing chart in the chart panel with the new chart.
+       
+  var submit2 = ui.Button({
+                label:'Get Statistics'});
+  mainPanel.add(submit2);
+  
+  
+  
+  
+  var graph = function() {
+    if (myID == nap){
+    var chart = ui.Chart.image
+                  .seriesByRegion({
+                    imageCollection: Knap,
+                    regions: aoi,
+                    reducer: ee.Reducer.mean(),
+                    band: 'ALBD',
+                    scale: 30,
+                    xProperty: 'system:time_start'
+                  })
+                  .setOptions({
+                    title:'Spatial Avegrage Albedo',
+                    titlePostion: 'none',
+                    legend: {position: 'none'},
+                    hAxis: {title: 'Time'},
+                    vAxis: {title: 'Albedo'},
+                    series: {0: {color: '23cba7'}}
+                  });
+    }
+    else if (myID == li){
+      var chart = ui.Chart.image
+                  .seriesByRegion({
+                    imageCollection: Liang,
+                    regions: aoi,
+                    reducer: ee.Reducer.mean(),
+                    band: 'ALBD',
+                    scale: 30,
+                    xProperty: 'system:time_start'
+                  })
+                  .setOptions({
+                    title: 'Spatial Avegrage Albedo',
+                    titlePostion: 'none',
+                    legend: {position: 'none'},
+                    hAxis: {title: 'Time'},
+                    vAxis: {title: 'Albedo'},
+                    series: {0: {color: '23cba7'}}
+                  });
+      
+    }
+    chartPanel.widgets().reset([chart]);
+  }
+  //drawingTools.onDraw(ui.util.debounce(graph, 500));
+  //drawingTools.onEdit(ui.util.debounce(graph, 500));
+  submit2.onClick(ui.util.debounce(graph,500))
+  
+
+}
+
+
+
+
+
+var submit = ui.Button({
+                label:'Estimate Albedo'});
+mainPanel.add(submit)
+
+submit.onClick(albedo_glc)
+
+var title_n = ui.Label({
+  value:'Copyright: Himalayan Cryospheric Research Lab, University of Kashmir',
+  style:{'fontSize': '10px'}
+})
+mainPanel.add(title_n)
+
+var title6 = ui.Label({
+  value: 'Developed by: Shahid Shuja Shafai (shahidshafai@gmail.com)',
+  style: {'fontSize': '10px'}
+});
+mainPanel.add(title6)
+ui.root.add(mainPanel);
