@@ -1,4 +1,4 @@
-- 👋 Hi, I’m @shahidshuja
+- 👋 Hi, I’m Shahid
 - 👀 My research interests include remote sensing, machine learning, geospatial data analytics, and algorithm development
 - 🌱 I’m currently working as Co-Principal Investigator/Research Fellow at Himalayan Cryosphere Research Lab
 - 💞️ I’m looking for full-time roles in national labs, industry, or academia
