@@ -1,11 +1,8 @@
-Map.setOptions('TERRAIN')
+Map.setOptions('TERRAIN') 
 Map.style().set('cursor', 'crosshair');
 
-Map.setCenter(75.81244834544515,35.88583853917917,9)
-var pal = ['#000080', '#0000a7', '#0000cf','#0000f7','#000dff','#0030ff','#0054ff','#0077ff','#009aff',
-          '#00bdff','#00e0fb','#18ffdf','#34ffc2','#51ffa6','#6dff8a','#8aff6d','#a6ff51','#c2ff34',
-          '#dfff18','#fbf100','#ffd000','#ffb000','#ff8f00','#ff6e00','#ff4e00','#ff2d00','#f70d00',
-          '#cf0000','#a70000','#800000'];
+Map.setCenter(75.81244834544515,35.88583853917917,9) // set regional center
+
 
 function makeColorBarParams(palette) {
                                      return {
@@ -50,12 +47,12 @@ function makeColorBarParams(palette) {
                 var legendPanel = ui.Panel([legendTitle, colorBar, legendLabels]);
 
                 
-
+//add main panel to map
 var mainPanel = ui.Panel({
   style: {width: '350px'}
 });
-//ui.root.add(mainPanel)
 
+// add descriptive title
 var title = ui.Label({
   value:'Snow Albedo in the Himalayas',
   style:{'fontSize': '26px'}
@@ -92,13 +89,13 @@ mainPanel.add(des_label1)
 
 
 
-//////////////////////////////////inputing glacier///////////////////////////
+//////////////////////////////////setting model options///////////////////////////
 
 var title2x2 = ui.Label({
   value:'Select Method.',
   style: {'fontSize': '13px'}
 });
-// You can add widgets to the panel
+// Add widget to the panel
 mainPanel.add(title2x2)
 
 
@@ -132,7 +129,7 @@ var title2x = ui.Label({
   value:'Select the time interval.',
   style: {'fontSize': '13px'}
 });
-// You can add widgets to the panel
+
 mainPanel.add(title2x)
 
 
@@ -140,10 +137,10 @@ var title2 = ui.Label({
   value:'---Select Start Month---',
   style: {'fontSize': '11px'}
 });
-// You can add widgets to the panel
+
 mainPanel.add(title2)
 
-// You can even add panels to other panels
+// Add panels to other panels
 var dropdownPanel = ui.Panel({
   layout: ui.Panel.Layout.flow('horizontal'),
 });
@@ -153,7 +150,7 @@ var title3 = ui.Label({
   value: '---Select End Month---',
   style: {'fontSize': '11px'}
 });
-// You can add widgets to the panel
+
 mainPanel.add(title3)
 
 var dropdownPanel2 = ui.Panel({
@@ -182,13 +179,6 @@ dropdownPanel.add(yearSelector)
 dropdownPanel.add(monthSelector)
 dropdownPanel2.add(yearSelector2)
 dropdownPanel2.add(monthSelector2)
-
-
-//var button = ui.Button('Calculate Glacical Velocity')
-//mainPanel.add(button)
-
-
-
 
 
 // Let's add a dropdown with the years
@@ -227,21 +217,8 @@ monthStrings.evaluate(function(monthList) {
 
 })
 
-// Use a SplitPanel so it's possible to resize the two panels.
 
-
-
-
-
-//var glc_id = glcSelector.getValue()
-//var selected_glacier = ee.Algorithms.If()
-
-
-
-
-
-
-
+//setup UI drawing features
 var drawingTools = Map.drawingTools();
 drawingTools.setShown(true);
 while (drawingTools.layers().length() > 0) {
@@ -250,7 +227,7 @@ while (drawingTools.layers().length() > 0) {
 }
 
 var dummyGeometry =
-    ui.Map.GeometryLayer({geometries: null, name: 'geometry', color: '#000080',shown:0})//.getShown(true)
+    ui.Map.GeometryLayer({geometries: null, name: 'geometry', color: '#000080',shown:0})
 
 drawingTools.layers().add(dummyGeometry);
 
@@ -282,7 +259,7 @@ var title3xc = ui.Label({
   value: 'Select AOI',
   style: {'fontSize': '13px'}
 });
-// You can add widgets to the panel
+
 mainPanel.add(title3xc)
 var controlPanel = ui.Panel({
   widgets: [
@@ -312,19 +289,13 @@ var controlPanel = ui.Panel({
 });
 
 mainPanel.add(controlPanel);
-/////////////////////////////////////////////
-///////////////////////////////////////////
-///////////////////////////////////////////
-//////////////////////////////////////////
-
-
 
 
 
 /////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-
+// jet palette sequence (blue to yellow to red)
 var pal = ['#000080', '#0000a7', '#0000cf','#0000f7','#000dff','#0030ff','#0054ff','#0077ff','#009aff',
           '#00bdff','#00e0fb','#18ffdf','#34ffc2','#51ffa6','#6dff8a','#8aff6d','#a6ff51','#c2ff34',
           '#dfff18','#fbf100','#ffd000','#ffb000','#ff8f00','#ff6e00','#ff4e00','#ff2d00','#f70d00',
@@ -351,13 +322,10 @@ var albedo_glc = function() {
   }
   
   // Get the drawn geometry; it will define the reduction region.
-  
     
-  
   var aoi = drawingTools.layers().get(0).getEeObject();
   
   drawingTools.layers().get(0).setShown(0);
-  
   
   // Set the drawing mode back to null; turns drawing off.
   drawingTools.setShape(null);
@@ -366,22 +334,7 @@ var albedo_glc = function() {
   var mapScale = Map.getScale();
   var scale = mapScale > 5000 ? mapScale * 2 : 5000;
   Map.centerObject(aoi,11)
-  /*
-  function maskS2clouds(image) {
-                var qa = image.select('QA60');
-
-                // Bits 10 and 11 are clouds and cirrus, respectively.
-                var cloudBitMask = 1 << 10;
-                var cirrusBitMask = 1 << 11;
-
-                // Both flags should be set to zero, indicating clear conditions.
-                var maskT = qa.bitwiseAnd(cloudBitMask).eq(0)
-                          .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
-
-                return image.updateMask(maskT).divide(10000);
-                }
-                */
-    function applyScaleFactors(image) {
+  function applyScaleFactors(image) {
             var opticalBands = image.select('SR_B.').multiply(0.0000275).add(-0.2);
             var thermalBands = image.select('ST_B.*').multiply(0.00341802).add(149.0);
             return image.addBands(opticalBands, null, true)
@@ -445,22 +398,9 @@ var albedo_glc = function() {
                       max:1.08
                               };
     
-    Map.addLayer(img.mean().clip(aoi),vizi,'RGB')
+    Map.addLayer(img.mean().clip(aoi),vizi,'RGB')//display rgb composite of the ROI
     
-    /*var albedo_knap = img.mean().expression(
-                        '0.726*b3 - 0.322*b3**2 - 0.015*b8 + 0.581*b8**2', {
-                        'b3': img.select('SR_B3'),
-                        'b8': img.select('SR_B5')
-                        }).rename('albedo_knap').clip(aoi);*/
-    //Create key of items for dropdown
-//Create key of items for dropdown
-
-    
-    
-    
-    
-    
-    
+     
     
     
     
@@ -476,21 +416,13 @@ var albedo_glc = function() {
     else if (myID == li) {
        Map.addLayer(Liang.select(['ALBD']).mean().clamp(0,1),{palette:pal},'Albedo_Liang')
     }
-    //var cox = ee.ImageCollection([])
+        
     
     
     
     
-    
-    
-    
-  // Chart NDVI time series for the selected area of interest.
- 
-  
-          
-    //Map.add(chart)
-            // Replace the existing chart in the chart panel with the new chart.
-       
+         
+   
   var submit2 = ui.Button({
                 label:'Get Statistics'});
   mainPanel.add(submit2);
@@ -540,8 +472,7 @@ var albedo_glc = function() {
     }
     chartPanel.widgets().reset([chart]);
   }
-  //drawingTools.onDraw(ui.util.debounce(graph, 500));
-  //drawingTools.onEdit(ui.util.debounce(graph, 500));
+  
   submit2.onClick(ui.util.debounce(graph,500))
   
 
@@ -569,3 +500,6 @@ var title6 = ui.Label({
 });
 mainPanel.add(title6)
 ui.root.add(mainPanel);
+
+
+///////////////////////////////////end of program/////////////////////
